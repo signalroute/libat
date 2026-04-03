@@ -3,38 +3,43 @@ name: Auto-License
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches: [ main, develop ]
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   addlicense:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository # Prevent runs from forks
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
       - name: Install addlicense
         run: go install github.com/google/addlicense@latest
-      
-      - name: Add license headers
+
+      - name: Apply Licenses
+        # Changed to gpl3 and added -s for the SPDX tag you wanted.
+        # Explicitly targeting your C++ files.
         run: |
-          $HOME/go/bin/addlicense -c "yanujz" -l "MIT" \
-            include/at/*.hpp \
-            include/at/*.in \
-            tests/*.cpp \
-            examples/*.cpp \
-            CMakeLists.txt 2>/dev/null || true
-      
-      - name: Commit changes if any
+          addlicense -c "Yanujz" -l gpl3 -s \
+            "include/at/*.hpp" \
+            "tests/*.cpp" \
+            "examples/*.cpp"
+
+      - name: Commit changes
         run: |
           if [[ -n $(git status -s) ]]; then
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
-            git add -A
-            git commit -m "chore: add license headers"
+            git add .
+            git commit -m "chore: apply GPL-3.0-or-later license headers"
             git push
           fi
