@@ -105,13 +105,29 @@ libat/
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ./build/basic_modem
+```
+
+### Development commands
+
+```bash
+cmake -B build
+cmake --build build --target libat_help       # Show available targets
+cmake --build build --target libat_license    # Add/update license headers
+cmake --build build --target libat_check      # Verify license headers
 ```
 
 ---
 
 ## License
 
-MIT
+[GPL-3.0-or-later](LICENSE) — See LICENSE file for full text.
+
+### SPDX Identifier
+
+```
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2025 yanujz
+```

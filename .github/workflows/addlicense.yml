@@ -26,13 +26,13 @@ jobs:
         run: go install github.com/google/addlicense@latest
 
       - name: Apply Licenses
-        # Changed to gpl3 and added -s for the SPDX tag you wanted.
-        # Explicitly targeting your C++ files.
         run: |
-          addlicense -c "Yanujz" -l gpl3 -s \
-            "include/at/*.hpp" \
-            "tests/*.cpp" \
-            "examples/*.cpp"
+          addlicense -c "yanujz" -l gpl3 -s \
+            include/at/*.hpp \
+            include/at/*.in \
+            tests/*.cpp \
+            examples/*.cpp \
+            CMakeLists.txt
 
       - name: Commit changes
         run: |

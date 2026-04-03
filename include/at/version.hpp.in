@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 yanujz
+
 /**
  * @file version.hpp
  * @brief Auto-generated version header — do not edit by hand.

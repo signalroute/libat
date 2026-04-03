@@ -45,11 +45,11 @@ ctest --test-dir build --output-on-failure
 3. **Make changes** with clear commit messages
 4. **Add license headers** to new files:
    ```bash
-   make license
+   cmake -B build && cmake --build build --target libat_license
    ```
 5. **Run tests** to ensure nothing breaks:
    ```bash
-   make test
+   cmake -B build && cmake --build build && ctest --test-dir build
    ```
 6. **Push** to your fork and open a **pull request** against `main`
 
@@ -67,24 +67,28 @@ ctest --test-dir build --output-on-failure
 - All new features must include Google Test cases
 - Tests must be **100% compliant with ITU-T V.250 and 3GPP TS 27.007**
 - Use real-world AT command examples, not made-up formats
-- Run `make test` before submitting a PR
+- Run tests before submitting a PR:
+  ```bash
+  ctest --test-dir build --output-on-failure
+  ```
 
 ### License
 
-All contributions must be compatible with the **MIT License**. By submitting a pull request, you agree that your contributions will be licensed under the MIT License.
+All contributions must be compatible with the **GPL-3.0-or-later** license. By submitting a pull request, you agree that your contributions will be licensed under the GPL-3.0-or-later license.
 
 ### License Headers
 
-Every source file (`.hpp`, `.cpp`, `.in`, `CMakeLists.txt`) must include a header:
+Every source file (`.hpp`, `.cpp`, `.in`, `CMakeLists.txt`) must include SPDX headers:
 
 ```cpp
-// Copyright (c) 2025 yanujz
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// ...
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 yanujz
 ```
 
-Use `make license` to add headers automatically, or GitHub Actions will handle it on PR merge.
+Use the CMake target to add headers automatically, or GitHub Actions will handle it on PR merge:
+```bash
+cmake --build build --target libat_license
+```
 
 ## CI/CD
 

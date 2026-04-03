@@ -22,13 +22,13 @@ jobs:
         run: go install github.com/google/addlicense@latest
       
       - name: Check license headers
-        # Updated to check for GPLv3 SPDX short-form. 
-        # Removed CMakeLists.txt to prevent parser failure.
         run: |
-          addlicense -check -c "Yanujz" -l gpl3 -s \
+          addlicense -check -c "yanujz" -l gpl3 -s \
             include/at/*.hpp \
+            include/at/*.in \
             tests/*.cpp \
-            examples/*.cpp
+            examples/*.cpp \
+            CMakeLists.txt
 
   build-gcc:
     name: Build & Test (GCC 15)
