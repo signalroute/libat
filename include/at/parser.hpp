@@ -4,11 +4,15 @@
 /**
  * @file at_parser.hpp
  * @brief High-performance C++23 AT command parser library - Production Ready
- * @version 1.1.0
- * 
+ * @version 1.2.0
+ *
  * Platform-agnostic, header-only AT command parser using C++23 features.
  * Compliant with 3GPP TS 27.007, ITU-T V.250 standards.
- * 
+ *
+ * Changes in v1.2.0:
+ * - Added proprietary modem prefix support (^, $, *) for real-world hardware
+ *   compatibility (Huawei, u-blox, Motorola, Quectel, Ericsson, Cinterion)
+ *
  * Changes in v1.1.0:
  * - Fixed critical ring buffer wrap-around bug (replaced with linear_buffer)
  * - Fixed accidental heap allocations in float parsing and registry lookup
@@ -342,6 +346,9 @@ struct token {
         hash,
         percent,
         ampersand,
+        caret,      ///< '^'  — Huawei / Cinterion (AT^SYSCFG, AT^SYSINFO …)
+        dollar,     ///< '$'  — u-blox / Telit      (AT$GPSP, AT$GPSACP …)
+        asterisk,   ///< '*'  — Motorola / Quectel   (AT*CNTI, AT*E2SMSPR …)
         identifier,
         number,
         string,
@@ -388,6 +395,9 @@ public:
             case '#': advance(); return make_token(token::type::hash, start_pos);
             case '%': advance(); return make_token(token::type::percent, start_pos);
             case '&': advance(); return make_token(token::type::ampersand, start_pos);
+            case '^': advance(); return make_token(token::type::caret,     start_pos);
+            case '$': advance(); return make_token(token::type::dollar,    start_pos);
+            case '*': advance(); return make_token(token::type::asterisk,  start_pos);
             case '=': advance(); return make_token(token::type::equal, start_pos);
             case '?': advance(); return make_token(token::type::question, start_pos);
             case ',': advance(); return make_token(token::type::comma, start_pos);
@@ -687,10 +697,13 @@ private:
         // Parse prefix (+, #, %, &)
         char prefix = '\0';
         switch (current_.tok_type) {
-            case token::type::plus: prefix = '+'; break;
-            case token::type::hash: prefix = '#'; break;
-            case token::type::percent: prefix = '%'; break;
+            case token::type::plus:      prefix = '+'; break;
+            case token::type::hash:      prefix = '#'; break;
+            case token::type::percent:   prefix = '%'; break;
             case token::type::ampersand: prefix = '&'; break;
+            case token::type::caret:     prefix = '^'; break;  // Huawei / Cinterion
+            case token::type::dollar:    prefix = '$'; break;  // u-blox / Telit
+            case token::type::asterisk:  prefix = '*'; break;  // Motorola / Quectel
             default: return parse_error::invalid_syntax;
         }
         advance();

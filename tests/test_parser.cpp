@@ -489,3 +489,242 @@ TEST(StreamParser, InvalidCommandReturnsError) {
     auto result = sp.feed("GARBAGE\r");
     EXPECT_FALSE(result.has_value());
 }
+
+// ============================================================================
+// Proprietary modem prefixes  (issue #1)
+//
+// Real hardware uses manufacturer-specific prefixes that are not in
+// ITU-T V.250 or 3GPP TS 27.007 but are widely deployed:
+//   ^ (caret)    — Huawei, Siemens/Cinterion
+//   $ (dollar)   — u-blox, Telit
+//   * (asterisk) — Motorola, Quectel, Ericsson
+//
+// All three are parsed as command_type::extended by the libat tokenizer.
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// Caret prefix  AT^  (Huawei / Cinterion)
+// ----------------------------------------------------------------------------
+
+TEST(ProprietaryPrefixes, HuaweiExecute) {
+    // AT^SYSINFO — query system information (Huawei)
+    auto p      = make_parser("AT^SYSINFO");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::extended);
+    EXPECT_EQ(result->name, "SYSINFO");
+}
+
+TEST(ProprietaryPrefixes, HuaweiRead) {
+    // AT^SYSCFG? — read system configuration (Huawei)
+    auto p      = make_parser("AT^SYSCFG?");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::read);
+    EXPECT_EQ(result->name, "SYSCFG");
+    EXPECT_TRUE(result->is_query());
+}
+
+TEST(ProprietaryPrefixes, HuaweiSet) {
+    // AT^SYSCFG=2,2,3FFFFFFF,1,2 — set preferred network mode (Huawei)
+    const std::string input{"AT^SYSCFG=2,2,3FFFFFFF,1,2"};
+    auto p      = make_parser(input);
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::set);
+    EXPECT_EQ(result->name, "SYSCFG");
+    EXPECT_FALSE(result->params.empty());
+}
+
+TEST(ProprietaryPrefixes, HuaweiNdisdupActivate) {
+    // AT^NDISDUP=1,1 — activate dial-up networking (Huawei E3372)
+    const std::string input{"AT^NDISDUP=1,1"};
+    auto p      = make_parser(input);
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::set);
+    EXPECT_EQ(result->name, "NDISDUP");
+
+    auto conn_type = result->params.get_as<int64_t>(0);
+    auto activate  = result->params.get_as<int64_t>(1);
+    ASSERT_TRUE(conn_type.has_value());
+    ASSERT_TRUE(activate.has_value());
+    EXPECT_EQ(*conn_type, 1);
+    EXPECT_EQ(*activate,  1);
+}
+
+TEST(ProprietaryPrefixes, CinterionTest) {
+    // AT^SCFG=? — list all configurable parameters (Cinterion / Thales)
+    auto p      = make_parser("AT^SCFG=?");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::test);
+    EXPECT_EQ(result->name, "SCFG");
+}
+
+// ----------------------------------------------------------------------------
+// Dollar prefix  AT$  (u-blox / Telit)
+// ----------------------------------------------------------------------------
+
+TEST(ProprietaryPrefixes, UbloxGpsPowerOn) {
+    // AT$GPSP=1 — switch on the GPS receiver (u-blox SARA / TOBY)
+    auto p      = make_parser("AT$GPSP=1");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::set);
+    EXPECT_EQ(result->name, "GPSP");
+
+    auto power = result->params.get_as<int64_t>(0);
+    ASSERT_TRUE(power.has_value());
+    EXPECT_EQ(*power, 1);
+}
+
+TEST(ProprietaryPrefixes, UbloxGpsPowerOff) {
+    // AT$GPSP=0 — switch off the GPS receiver
+    auto p      = make_parser("AT$GPSP=0");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::set);
+    EXPECT_EQ(result->name, "GPSP");
+
+    auto power = result->params.get_as<int64_t>(0);
+    ASSERT_TRUE(power.has_value());
+    EXPECT_EQ(*power, 0);
+}
+
+TEST(ProprietaryPrefixes, UbloxGpsPositionExecute) {
+    // AT$GPSACP — get GPS acquired position (u-blox)
+    auto p      = make_parser("AT$GPSACP");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::extended);
+    EXPECT_EQ(result->name, "GPSACP");
+}
+
+TEST(ProprietaryPrefixes, UbloxGpsPowerRead) {
+    // AT$GPSP? — read current GPS power state
+    auto p      = make_parser("AT$GPSP?");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::read);
+    EXPECT_EQ(result->name, "GPSP");
+}
+
+TEST(ProprietaryPrefixes, TelitSet) {
+    // AT$QCPDPP=1,1 — PDP authentication (Telit)
+    const std::string input{"AT$QCPDPP=1,1"};
+    auto p      = make_parser(input);
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::set);
+    EXPECT_EQ(result->name, "QCPDPP");
+    EXPECT_EQ(result->params.size(), 2u);
+}
+
+// ----------------------------------------------------------------------------
+// Asterisk prefix  AT*  (Motorola / Quectel / Ericsson)
+// ----------------------------------------------------------------------------
+
+TEST(ProprietaryPrefixes, MotorolaCntiExecute) {
+    // AT*CNTI=0 — query current network type (Motorola)
+    auto p      = make_parser("AT*CNTI=0");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::set);
+    EXPECT_EQ(result->name, "CNTI");
+
+    auto mode = result->params.get_as<int64_t>(0);
+    ASSERT_TRUE(mode.has_value());
+    EXPECT_EQ(*mode, 0);
+}
+
+TEST(ProprietaryPrefixes, QuectelEnableUrc) {
+    // AT*QNWINFO — network info URC (Quectel)
+    auto p      = make_parser("AT*QNWINFO");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::extended);
+    EXPECT_EQ(result->name, "QNWINFO");
+}
+
+TEST(ProprietaryPrefixes, EricssonSmsPriorityRead) {
+    // AT*E2SMSPR? — read SMS priority (Ericsson-style)
+    auto p      = make_parser("AT*E2SMSPR?");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::read);
+    EXPECT_EQ(result->name, "E2SMSPR");
+}
+
+TEST(ProprietaryPrefixes, QuectelTest) {
+    // AT*QNWINFO=? — test command
+    auto p      = make_parser("AT*QNWINFO=?");
+    auto result = p.parse_command();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->type, at::command_type::test);
+    EXPECT_EQ(result->name, "QNWINFO");
+}
+
+// ----------------------------------------------------------------------------
+// Stream parser with proprietary prefixes
+// ----------------------------------------------------------------------------
+
+TEST(ProprietaryPrefixes, StreamParserCaretPrefix) {
+    at::stream_parser sp;
+    auto result = sp.feed("AT^SYSINFO\r");
+
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(result->size(), 1u);
+    EXPECT_EQ(result->at(0).type, at::command_type::extended);
+}
+
+TEST(ProprietaryPrefixes, StreamParserDollarPrefix) {
+    at::stream_parser sp;
+    auto result = sp.feed("AT$GPSP=1\r");
+
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(result->size(), 1u);
+    EXPECT_EQ(result->at(0).type, at::command_type::set);
+
+    auto power = result->at(0).params.get_as<int64_t>(0);
+    ASSERT_TRUE(power.has_value());
+    EXPECT_EQ(*power, 1);
+}
+
+TEST(ProprietaryPrefixes, StreamParserAsteriskPrefix) {
+    at::stream_parser sp;
+    auto result = sp.feed("AT*CNTI=0\r");
+
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(result->size(), 1u);
+    EXPECT_EQ(result->at(0).type, at::command_type::set);
+}
+
+TEST(ProprietaryPrefixes, StreamParserMixedStandardAndProprietary) {
+    // Realistic burst: a standard command followed by a proprietary one
+    at::stream_parser sp;
+
+    auto r1 = sp.feed("AT+CREG=2\r");
+    ASSERT_TRUE(r1.has_value());
+    ASSERT_EQ(r1->size(), 1u);
+    EXPECT_EQ(r1->at(0).type, at::command_type::set);
+
+    auto r2 = sp.feed("AT^NDISDUP=1,1\r");
+    ASSERT_TRUE(r2.has_value());
+    ASSERT_EQ(r2->size(), 1u);
+    EXPECT_EQ(r2->at(0).type, at::command_type::set);
+}
