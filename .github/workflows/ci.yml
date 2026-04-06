@@ -67,11 +67,10 @@ jobs:
   # ---------------------------------------------------------------------------
   # Clang 18 + GCC-14 libstdc++ headers
   #
-  # Root cause of previous failure:
-  #   ubuntu-latest ships GCC 13 by default.  GCC 13's libstdc++ does NOT
-  #   include <generator> (added in GCC 14 / C++23).  Installing g++-14
-  #   alongside clang-18 makes Clang pick up GCC-14's libstdc++ headers and
-  #   the <generator> header becomes available without any extra flags.
+  # <generator> (C++23) requires libstdc++-14.  ubuntu-latest ships GCC 13
+  # by default, so we install g++-14 explicitly.  Clang does NOT auto-promote
+  # to the highest installed GCC — we must pass --gcc-install-dir to tell it
+  # exactly which GCC installation to use for its runtime headers and library.
   # ---------------------------------------------------------------------------
   build-clang:
     name: Build & Test (Clang 18)
@@ -82,9 +81,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          # g++-14 provides libstdc++-14 headers, which include <generator>.
-          # clang-18 auto-detects the highest installed GCC and uses its headers.
-          sudo apt-get install -y clang-18 g++-14 cmake ninja-build
+          # g++-14 provides the libstdc++-14 headers that contain <generator>.
+          sudo apt-get install -y clang-18 g++-14 libstdc++-14-dev cmake ninja-build
 
       - name: Configure
         run: |
@@ -92,6 +90,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=clang++-18 \
             -DCMAKE_C_COMPILER=clang-18 \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/14" \
             -G Ninja
 
       - name: Build
