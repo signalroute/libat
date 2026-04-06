@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2025 yanujz
+
 name: CI
 
 on:
@@ -7,21 +10,23 @@ on:
     branches: [ main, develop ]
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # License header check  (google/addlicense, SPDX GPL-3.0-or-later)
+  # ---------------------------------------------------------------------------
   license-check:
     name: License Headers
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Go
-        uses: actions/setup-go@v5
+
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-      
+
       - name: Install addlicense
         run: go install github.com/google/addlicense@latest
-      
-      - name: Check license headers
+
+      - name: Check SPDX headers
         run: |
           addlicense -check -c "yanujz" -l gpl3 -s \
             include/at/*.hpp \
@@ -30,18 +35,21 @@ jobs:
             examples/*.cpp \
             CMakeLists.txt
 
+  # ---------------------------------------------------------------------------
+  # GCC 15  (libstdc++-15 ships std::generator natively)
+  # ---------------------------------------------------------------------------
   build-gcc:
     name: Build & Test (GCC 15)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt-get update
           sudo apt-get install -y g++-15 cmake ninja-build
-      
+
       - name: Configure
         run: |
           cmake -B build \
@@ -49,54 +57,68 @@ jobs:
             -DCMAKE_C_COMPILER=gcc-15 \
             -DCMAKE_BUILD_TYPE=Release \
             -G Ninja
-      
+
       - name: Build
         run: cmake --build build --parallel
-      
+
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
+  # ---------------------------------------------------------------------------
+  # Clang 18  (libc++ 18)
+  #
+  # libc++ 18 ships std::expected (added LLVM 16) but not std::generator
+  # (added LLVM 20).  The <generator> include is already skipped on all
+  # Clang builds via !defined(__clang__) guard in parser.hpp, so
+  # tokenizer::stream() is simply not compiled — all other C++23 features
+  # (std::expected, <format>, std::from_chars …) work fine.
+  #
+  # clang-18 is pre-installed on ubuntu-24.04; only libc++ packages are added.
+  # ---------------------------------------------------------------------------
   build-clang:
     name: Build & Test (Clang 18)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 18
-          sudo apt-get install -y clang-18 cmake ninja-build
-      
+          sudo apt-get update
+          sudo apt-get install -y libc++-18-dev libc++abi-18-dev cmake ninja-build
+
       - name: Configure
         run: |
           cmake -B build \
             -DCMAKE_CXX_COMPILER=clang++-18 \
             -DCMAKE_C_COMPILER=clang-18 \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
+            -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -lc++abi" \
             -G Ninja
-      
+
       - name: Build
         run: cmake --build build --parallel
-      
+
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
+  # ---------------------------------------------------------------------------
+  # MSVC (Visual Studio 2022)
+  # ---------------------------------------------------------------------------
   build-msvc:
     name: Build & Test (MSVC)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Configure
         run: |
           cmake -B build `
             -DCMAKE_BUILD_TYPE=Release `
             -G "Visual Studio 17 2022"
-      
+
       - name: Build
         run: cmake --build build --config Release --parallel
-      
+
       - name: Test
         run: ctest --test-dir build --output-on-failure -C Release

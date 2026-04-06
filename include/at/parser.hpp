@@ -27,10 +27,31 @@
 #include <coroutine>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <expected>
 #include <format>
 #include <functional>
-#include <generator>
+// std::generator (P2502R2) is available in GCC ≥ 14 (libstdc++) and
+// MSVC ≥ 19.35.  GCC 14's <generator> header uses GCC-specific coroutine
+// intrinsics; __has_include returns true on Clang when GCC 14 headers are
+// installed but the header cannot actually be compiled with Clang.
+// Skip the include entirely on any Clang build (Apple or vanilla) and rely
+// on the LIBAT_HAS_GENERATOR macro to conditionally compile the stream() API.
+#if !defined(__clang__)
+#  if __has_include(<generator>)
+#    include <generator>
+#    if defined(__cpp_lib_generator) && __cpp_lib_generator >= 202207L
+#      define LIBAT_HAS_GENERATOR 1
+#    else
+#      define LIBAT_HAS_GENERATOR 0
+#    endif
+#  else
+#    define LIBAT_HAS_GENERATOR 0
+#  endif
+#else
+#  define LIBAT_HAS_GENERATOR 0
+#endif
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -242,13 +263,30 @@ private:
             return int_val;
         }
         
-        // Try float using from_chars (C++17/23, zero-allocation)
-        // Note: std::from_chars for double requires GCC 11+, MSVC 2017 15.7+, or Clang 14+
+        // Try float using from_chars (zero-allocation on libstdc++ and MSVC).
+        // libc++ added from_chars for floating-point types in LLVM 20; fall back
+        // to strtod with a small stack buffer on older libc++ to avoid a link
+        // error while still keeping stack-only allocation.
         double dbl_val{};
+#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION < 200000
+        {
+            char buf[64];
+            const auto len = std::min(sv.size(), std::size_t{63});
+            std::memcpy(buf, sv.data(), len);
+            buf[len] = '\0';
+            char* end = nullptr;
+            dbl_val = std::strtod(buf, &end);
+            const auto fptr = sv.data() + (end - buf);
+            if (end != buf && fptr == sv.data() + sv.size()) {
+                return dbl_val;
+            }
+        }
+#else
         auto [fptr, fec] = std::from_chars(sv.data(), sv.data() + sv.size(), dbl_val);
         if (fec == std::errc{} && fptr == sv.data() + sv.size()) {
             return dbl_val;
         }
+#endif
         
         return sv;
     }
@@ -415,7 +453,10 @@ public:
         }
     }
     
-    // C++23 generator for streaming tokens
+    // C++23 generator for streaming tokens.
+    // Only available when std::generator is provided by the standard library
+    // (GCC ≥ 14 / MSVC ≥ 19.38).  Use tokenizer::next() directly on Clang.
+#if LIBAT_HAS_GENERATOR
     [[nodiscard]] static std::generator<token> stream(std::string_view input) {
         tokenizer t(input);
         while (true) {
@@ -426,6 +467,7 @@ public:
             }
         }
     }
+#endif // LIBAT_HAS_GENERATOR
 
 private:
     std::string_view input_;
