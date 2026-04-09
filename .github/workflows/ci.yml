@@ -103,6 +103,32 @@ jobs:
         run: ctest --test-dir build --output-on-failure
 
   # ---------------------------------------------------------------------------
+  # macOS (GCC 14 — Apple Clang lacks std::generator)
+  # ---------------------------------------------------------------------------
+  build-macos:
+    name: Build & Test (GCC 14 / macOS)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install gcc@14 cmake ninja
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_C_COMPILER=gcc-14 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # ---------------------------------------------------------------------------
   # MSVC (Visual Studio 2022)
   # ---------------------------------------------------------------------------
   build-msvc:

@@ -27,7 +27,7 @@ endif()
 # Project
 # ---------------------------------------------------------------------------
 project(libat
-    VERSION     1.2.0
+    VERSION     0.1.0
     DESCRIPTION "High-performance C++23 header-only AT command parser"
     HOMEPAGE_URL "https://github.com/signalroute/libat"
     LANGUAGES   CXX
