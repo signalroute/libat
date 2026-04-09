@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2025 yanujz
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2026 Signalroute
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -29,12 +29,12 @@ endif()
 project(libat
     VERSION     1.2.0
     DESCRIPTION "High-performance C++23 header-only AT command parser"
-    HOMEPAGE_URL "https://github.com/yanujz/libat"
+    HOMEPAGE_URL "https://github.com/signalroute/libat"
     LANGUAGES   CXX
 )
 
 # Define project license (SPDX identifier)
-set(PROJECT_LICENSE "GPL-3.0-or-later")
+set(PROJECT_LICENSE "MIT")
 
 # ---------------------------------------------------------------------------
 # Build options
@@ -128,14 +128,14 @@ if(NOT TARGET libat_license AND LIBAT_BUILD_TESTS)
     find_program(ADDLICENSE addlicense)
     if(ADDLICENSE)
         add_custom_target(libat_license
-            COMMAND ${ADDLICENSE} -c "Yanujz" -l gpl3 -s
+            COMMAND ${ADDLICENSE} -c "Signalroute" -l mit -s
                 ${CMAKE_SOURCE_DIR}/include/at/*.hpp
                 ${CMAKE_SOURCE_DIR}/include/at/*.in
                 ${CMAKE_SOURCE_DIR}/tests/*.cpp
                 ${CMAKE_SOURCE_DIR}/examples/*.cpp
                 ${CMAKE_SOURCE_DIR}/CMakeLists.txt
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            COMMENT "Adding/updating GPL-3.0 license headers..."
+            COMMENT "Adding/updating MIT license headers..."
         )
     endif()
 endif()
@@ -144,14 +144,14 @@ if(NOT TARGET libat_check)
     find_program(ADDLICENSE addlicense)
     if(ADDLICENSE)
         add_custom_target(libat_check
-            COMMAND ${ADDLICENSE} -check -c "Yanujz" -l gpl3 -s
+            COMMAND ${ADDLICENSE} -check -c "Signalroute" -l mit -s
                 ${CMAKE_SOURCE_DIR}/include/at/*.hpp
                 ${CMAKE_SOURCE_DIR}/include/at/*.in
                 ${CMAKE_SOURCE_DIR}/tests/*.cpp
                 ${CMAKE_SOURCE_DIR}/examples/*.cpp
                 ${CMAKE_SOURCE_DIR}/CMakeLists.txt
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            COMMENT "Checking GPL-3.0 license headers..."
+            COMMENT "Checking MIT license headers..."
         )
     else()
         message(WARNING "addlicense not found. Install with: go install github.com/google/addlicense@latest")

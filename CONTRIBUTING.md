@@ -74,15 +74,15 @@ ctest --test-dir build --output-on-failure
 
 ### License
 
-All contributions must be compatible with the **GPL-3.0-or-later** license. By submitting a pull request, you agree that your contributions will be licensed under the GPL-3.0-or-later license.
+All contributions must be compatible with the **MIT** license. By submitting a pull request, you agree that your contributions will be licensed under the MIT license.
 
 ### License Headers
 
 Every source file (`.hpp`, `.cpp`, `.in`, `CMakeLists.txt`) must include SPDX headers:
 
 ```cpp
-// SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Yanujz
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 Signalroute
 ```
 
 Use the CMake target to add headers automatically, or GitHub Actions will handle it on PR merge:

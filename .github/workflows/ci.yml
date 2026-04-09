@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2025 yanujz
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2026 Signalroute
 
 name: CI
 
@@ -11,7 +11,7 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # License header check  (google/addlicense, SPDX GPL-3.0-or-later)
+  # License header check  (google/addlicense, SPDX MIT)
   # ---------------------------------------------------------------------------
   license-check:
     name: License Headers
@@ -28,7 +28,7 @@ jobs:
 
       - name: Check SPDX headers
         run: |
-          addlicense -check -c "yanujz" -l gpl3 -s \
+          addlicense -check -c "Signalroute" -l mit -s \
             include/at/*.hpp \
             include/at/*.in \
             tests/*.cpp \

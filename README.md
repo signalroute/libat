@@ -1,12 +1,12 @@
 <!--
-SPDX-License-Identifier: GPL-3.0-or-later
-SPDX-FileCopyrightText: 2025 yanujz
+SPDX-License-Identifier: MIT
+SPDX-FileCopyrightText: 2026 Signalroute
 -->
 
 # libat
 
-[![CI](https://github.com/Yanujz/libat/actions/workflows/ci.yml/badge.svg)](https://github.com/Yanujz/libat/actions/workflows/ci.yml)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![CI](https://github.com/signalroute/libat/actions/workflows/ci.yml/badge.svg)](https://github.com/signalroute/libat/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 
 A **header-only, zero-copy AT command parser** written in modern C++23.
@@ -52,7 +52,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     libat
-    GIT_REPOSITORY https://github.com/Yanujz/libat.git
+    GIT_REPOSITORY https://github.com/signalroute/libat.git
     GIT_TAG        v1.1.0
     GIT_SHALLOW    TRUE
 )
@@ -145,7 +145,7 @@ cmake --build build --target libat_license  # add/update license headers
 ```
 libat/
 ├── CMakeLists.txt
-├── LICENSE                          # GPL-3.0-or-later
+├── LICENSE                          # MIT
 ├── include/
 │   └── at/
 │       ├── parser.hpp               # ← include this (the whole library)
@@ -160,22 +160,19 @@ libat/
 
 ## License
 
-Copyright (C) 2025 yanujz
+MIT License — Copyright (c) 2026 Signalroute.
 
-This program is free software: you can redistribute it and/or modify it under
-the terms of the **GNU General Public License** as published by the Free
-Software Foundation, either **version 3** of the License, or (at your option)
-any later version.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but **WITHOUT
-ANY WARRANTY**; without even the implied warranty of **MERCHANTABILITY** or
-**FITNESS FOR A PARTICULAR PURPOSE**. See the GNU General Public License for
-more details.
-
-You should have received a copy of the GNU General Public License along with
-this program. If not, see <https://www.gnu.org/licenses/>.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
 ```
-SPDX-License-Identifier: GPL-3.0-or-later
-SPDX-FileCopyrightText: 2025 yanujz
+SPDX-License-Identifier: MIT
+SPDX-FileCopyrightText: 2026 Signalroute
 ```

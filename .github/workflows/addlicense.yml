@@ -27,7 +27,7 @@ jobs:
 
       - name: Apply Licenses
         run: |
-          addlicense -c "yanujz" -l gpl3 -s \
+          addlicense -c "Signalroute" -l mit -s \
             include/at/*.hpp \
             include/at/*.in \
             tests/*.cpp \
@@ -40,6 +40,6 @@ jobs:
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             git add .
-            git commit -m "chore: apply GPL-3.0-or-later license headers"
+            git commit -m "chore: apply MIT license headers"
             git push
           fi

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2026 Yanujz
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 Signalroute
 
 /**
  * @file basic_modem.cpp
