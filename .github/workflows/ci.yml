@@ -36,26 +36,40 @@ jobs:
             CMakeLists.txt
 
   # ---------------------------------------------------------------------------
-  # GCC 15  (libstdc++-15 ships std::generator natively)
+  # GCC matrix — g++-13 (ships on ubuntu-24.04) and g++-15 (toolchain PPA)
   # ---------------------------------------------------------------------------
   build-gcc:
-    name: Build & Test (GCC 15)
+    name: Build & Test (${{ matrix.compiler }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - compiler: g++-13
+            c_compiler: gcc-13
+            extra_apt: g++-13
+            ppa: false
+          - compiler: g++-15
+            c_compiler: gcc-15
+            extra_apt: g++-15
+            ppa: true
     steps:
       - uses: actions/checkout@v4
 
+      - name: Add toolchain PPA
+        if: matrix.ppa
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+
       - name: Install dependencies
         run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt-get update
-          sudo apt-get install -y g++-15 cmake ninja-build
+          sudo apt-get install -y ${{ matrix.extra_apt }} cmake ninja-build
 
       - name: Configure
         run: |
           cmake -B build \
-            -DCMAKE_CXX_COMPILER=g++-15 \
-            -DCMAKE_C_COMPILER=gcc-15 \
-            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+            -DCMAKE_BUILD_TYPE=Debug \
             -G Ninja
 
       - name: Build
