@@ -101,6 +101,11 @@ if(LIBAT_BUILD_TESTS)
      target_compile_features(libat_tests PRIVATE cxx_std_23)
 
      gtest_discover_tests(libat_tests)
+
+    add_executable(libat_gsm7_tests tests/test_gsm7.cpp)
+    target_link_libraries(libat_gsm7_tests PRIVATE GTest::gtest_main at::libat)
+    target_compile_features(libat_gsm7_tests PRIVATE cxx_std_23)
+    gtest_discover_tests(libat_gsm7_tests)
 endif()
 
 # ---------------------------------------------------------------------------
